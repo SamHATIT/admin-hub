@@ -5,6 +5,8 @@ Port: 3100
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
+from routers.auth import router as auth_router
+from routers.services import router as services_router
 
 app = FastAPI(
     title="Admin Hub - Digital Humans",
@@ -22,6 +24,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Routers
+app.include_router(auth_router)
+app.include_router(services_router)
 
 
 @app.get("/api/health")
