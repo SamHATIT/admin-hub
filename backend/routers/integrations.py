@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from routers.auth import get_current_user
 from services.n8n_service import get_workflows, get_workflow_executions, toggle_workflow
-from services.ollama_service import list_models
+from services.ollama_service import list_models, list_running, unload_model, delete_model, pull_model, get_server_memory
 from services.ghost_service import get_stats as ghost_stats
 from services.rag_service import check_health as rag_health
 from services.system_service import log_action
@@ -58,6 +58,46 @@ async def n8n_toggle_workflow(
 async def ollama_models(user: str = Depends(get_current_user)):
     """List all installed Ollama models."""
     return list_models()
+
+
+@router.get("/ollama/running")
+async def ollama_running(user: str = Depends(get_current_user)):
+    """List models currently loaded in RAM."""
+    return list_running()
+
+
+@router.get("/ollama/memory")
+async def ollama_memory(user: str = Depends(get_current_user)):
+    """Get server RAM usage."""
+    return get_server_memory()
+
+
+class OllamaModelRequest(BaseModel):
+    model: str
+
+
+@router.post("/ollama/unload")
+async def ollama_unload(request: OllamaModelRequest, user: str = Depends(get_current_user)):
+    """Unload a model from RAM."""
+    result = unload_model(request.model)
+    log_action("ollama", f"unload_{request.model}", result, user=user)
+    return result
+
+
+@router.post("/ollama/delete")
+async def ollama_delete(request: OllamaModelRequest, user: str = Depends(get_current_user)):
+    """Delete a model from disk."""
+    result = delete_model(request.model)
+    log_action("ollama", f"delete_{request.model}", result, user=user)
+    return result
+
+
+@router.post("/ollama/pull")
+async def ollama_pull(request: OllamaModelRequest, user: str = Depends(get_current_user)):
+    """Download a new model."""
+    result = pull_model(request.model)
+    log_action("ollama", f"pull_{request.model}", result, user=user)
+    return result
 
 
 # === GHOST ===

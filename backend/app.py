@@ -8,6 +8,7 @@ from config import settings
 from routers.auth import router as auth_router
 from routers.services import router as services_router
 from routers.integrations import router as integrations_router
+from routers.docker_router import router as docker_router
 
 app = FastAPI(
     title="Admin Hub - Digital Humans",
@@ -30,6 +31,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(services_router)
 app.include_router(integrations_router)
+app.include_router(docker_router)
 
 
 @app.get("/api/health")

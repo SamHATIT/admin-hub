@@ -46,7 +46,17 @@ export const getN8nExecutions = (workflowId, limit = 10) =>
 export const toggleN8nWorkflow = (workflowId, activate) =>
   api.post(`/n8n/workflow/${workflowId}/toggle`, { activate })
 export const getOllamaModels = () => api.get('/ollama/models')
+export const getOllamaRunning = () => api.get('/ollama/running')
+export const getOllamaMemory = () => api.get('/ollama/memory')
+export const ollamaUnload = (model) => api.post('/ollama/unload', { model })
+export const ollamaDelete = (model) => api.post('/ollama/delete', { model })
+export const ollamaPull = (model) => api.post('/ollama/pull', { model }, { timeout: 300000 })
 export const getGhostStats = () => api.get('/ghost/stats')
 export const getRagHealth = () => api.get('/rag/health')
+
+// Docker
+export const getDockerContainers = () => api.get('/docker/containers')
+export const dockerAction = (container, action) =>
+  api.post('/docker/action', { container, action })
 
 export default api

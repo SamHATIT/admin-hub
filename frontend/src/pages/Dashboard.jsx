@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import ServiceCard from '../components/ServiceCard'
 import RagCard from '../components/RagCard'
 import ChangePasswordModal from '../components/ChangePasswordModal'
+import DockerCard from '../components/DockerCard'
 import {
   getServicesStatus,
   getN8nWorkflows,
   getOllamaModels,
   getGhostStats,
   getRagHealth,
+  getDockerContainers,
 } from '../services/api'
 import { useToast } from '../components/Toast'
 
@@ -28,7 +30,7 @@ function Dashboard() {
   const { addToast } = useToast()
   const [services, setServices] = useState({})
   const [integrations, setIntegrations] = useState({
-    n8n: null, ollama: null, ghost: null, rag: null,
+    n8n: null, ollama: null, ghost: null, rag: null, docker: null,
   })
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -46,11 +48,12 @@ function Dashboard() {
       addToast('Impossible de charger les statuts', 'error')
     }
 
-    const [n8n, ollama, ghost, rag] = await Promise.allSettled([
+    const [n8n, ollama, ghost, rag, docker] = await Promise.allSettled([
       getN8nWorkflows(),
       getOllamaModels(),
       getGhostStats(),
       getRagHealth(),
+      getDockerContainers(),
     ])
 
     setIntegrations({
@@ -58,6 +61,7 @@ function Dashboard() {
       ollama: ollama.status === 'fulfilled' ? ollama.value.data : null,
       ghost: ghost.status === 'fulfilled' ? ghost.value.data : null,
       rag: rag.status === 'fulfilled' ? rag.value.data : null,
+      docker: docker.status === 'fulfilled' ? docker.value.data : null,
     })
   }, [addToast])
 
@@ -211,6 +215,7 @@ function Dashboard() {
           )
         })}
         <RagCard data={integrations.rag} />
+        <DockerCard containers={integrations.docker?.containers} onRefresh={fetchAll} />
       </main>
 
       <ChangePasswordModal

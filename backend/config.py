@@ -110,11 +110,11 @@ class Settings:
             "check_type": "http",
             "check_url": "http://localhost:11434/api/tags",
             "commands": {
-                "start": "nohup ollama serve > /var/log/ollama.log 2>&1 &",
-                "stop": "pkill -f 'ollama serve' || true",
+                "start": "systemctl start ollama",
+                "stop": "systemctl stop ollama",
             },
             "log_file": "/var/log/ollama.log",
-            "link": None,
+            "link": "http://72.61.161.222:3200",
         },
         "ghost": {
             "label": "Ghost CMS",
