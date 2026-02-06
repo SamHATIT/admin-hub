@@ -14,11 +14,14 @@ import {
 } from '../services/api'
 import { useToast } from '../components/Toast'
 
-const SERVICE_ORDER = [
+// Top grid: application services (3x2)
+const MAIN_SERVICES = [
   'backend', 'frontend', 'n8n',
   'ollama', 'ghost', 'postgresql',
-  'nginx',
 ]
+
+// Bottom section: infrastructure (Docker + Nginx + RAG)
+const INFRA_SERVICE = 'nginx'
 
 const DETAILS_LINKS = {
   n8n: '/n8n',
@@ -72,7 +75,6 @@ function Dashboard() {
       return
     }
 
-    // Check password expiry from login response
     const expired = localStorage.getItem('password_expired') === 'true'
     const days = parseInt(localStorage.getItem('password_days_remaining') || '90', 10)
     setDaysRemaining(days)
@@ -158,6 +160,8 @@ function Dashboard() {
     )
   }
 
+  const nginxSvc = services[INFRA_SERVICE]
+
   return (
     <div className="dashboard">
       {daysRemaining <= 15 && daysRemaining > 0 && (
@@ -200,8 +204,9 @@ function Dashboard() {
         </div>
       </header>
 
+      {/* Main services grid (3 columns) */}
       <main className="services-grid">
-        {SERVICE_ORDER.map((name) => {
+        {MAIN_SERVICES.map((name) => {
           const svc = services[name]
           if (!svc) return null
           return (
@@ -214,9 +219,27 @@ function Dashboard() {
             />
           )
         })}
-        <RagCard data={integrations.rag} />
-        <DockerCard containers={integrations.docker?.containers} onRefresh={fetchAll} />
       </main>
+
+      {/* Infrastructure section: Docker (big) | Nginx + RAG (stacked) */}
+      <section className="infra-section">
+        <h2 className="section-title">{'\uD83D\uDEE0\uFE0F'} Infrastructure</h2>
+        <div className="infra-grid">
+          <div className="infra-docker">
+            <DockerCard containers={integrations.docker?.containers} onRefresh={fetchAll} />
+          </div>
+          <div className="infra-stack">
+            {nginxSvc && (
+              <ServiceCard
+                service={nginxSvc}
+                details={null}
+                onRefresh={fetchAll}
+              />
+            )}
+            <RagCard data={integrations.rag} />
+          </div>
+        </div>
+      </section>
 
       <ChangePasswordModal
         isOpen={showChangePwd}
