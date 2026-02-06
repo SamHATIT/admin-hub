@@ -94,7 +94,7 @@ function Dashboard() {
         <div>
           <p>{models.length} modele{models.length > 1 ? 's' : ''}</p>
           {models.slice(0, 3).map((m) => (
-            <p key={m.name} className="detail-sub">- {m.name}{m.size ? ` (${m.size})` : ''}</p>
+            <p key={m.name} className="detail-sub">- {m.name}{m.size_display ? ` (${m.size_display})` : ''}</p>
           ))}
         </div>
       )
