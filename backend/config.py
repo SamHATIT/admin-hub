@@ -72,9 +72,9 @@ class Settings:
             "check_type": "http",
             "check_url": "http://localhost:8002/docs",
             "commands": {
-                "start": "cd /opt/digital-humans/backend && nohup uvicorn app.main:app --host 0.0.0.0 --port 8002 > /tmp/backend.log 2>&1 &",
+                "start": "cd /root/workspace/digital-humans-production/backend && source venv/bin/activate && nohup uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload > /tmp/backend.log 2>&1 &",
                 "stop": "fuser -k 8002/tcp",
-                "restart": "fuser -k 8002/tcp; sleep 2; cd /opt/digital-humans/backend && nohup uvicorn app.main:app --host 0.0.0.0 --port 8002 > /tmp/backend.log 2>&1 &",
+                "restart": "fuser -k 8002/tcp; sleep 2; cd /root/workspace/digital-humans-production/backend && source venv/bin/activate && nohup uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload > /tmp/backend.log 2>&1 &",
             },
             "log_file": "/tmp/backend.log",
             "link": "http://72.61.161.222:8002/docs",
@@ -85,9 +85,9 @@ class Settings:
             "check_type": "http",
             "check_url": "http://localhost:3000",
             "commands": {
-                "start": "cd /opt/digital-humans/frontend && nohup npx vite --host 0.0.0.0 --port 3000 > /tmp/frontend.log 2>&1 &",
+                "start": "cd /root/workspace/digital-humans-production/frontend && nohup npm run dev -- --host 0.0.0.0 > /tmp/frontend.log 2>&1 &",
                 "stop": "fuser -k 3000/tcp",
-                "restart": "fuser -k 3000/tcp; sleep 2; cd /opt/digital-humans/frontend && nohup npx vite --host 0.0.0.0 --port 3000 > /tmp/frontend.log 2>&1 &",
+                "restart": "fuser -k 3000/tcp; sleep 2; cd /root/workspace/digital-humans-production/frontend && nohup npm run dev -- --host 0.0.0.0 > /tmp/frontend.log 2>&1 &",
             },
             "log_file": "/tmp/frontend.log",
             "link": "http://72.61.161.222",
