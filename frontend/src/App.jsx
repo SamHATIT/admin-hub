@@ -7,7 +7,7 @@ import OllamaDetail from './pages/OllamaDetail'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <ToastProvider>
         <Routes>
           <Route path="/" element={<Dashboard />} />
