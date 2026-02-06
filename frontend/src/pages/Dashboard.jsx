@@ -18,6 +18,12 @@ const SERVICE_ORDER = [
   'nginx',
 ]
 
+// Services that have a detail page
+const DETAILS_LINKS = {
+  n8n: '/n8n',
+  ollama: '/ollama',
+}
+
 function Dashboard() {
   const navigate = useNavigate()
   const { addToast } = useToast()
@@ -158,6 +164,7 @@ function Dashboard() {
               service={svc}
               details={buildDetails(name)}
               onRefresh={fetchAll}
+              detailsLink={DETAILS_LINKS[name]}
             />
           )
         })}

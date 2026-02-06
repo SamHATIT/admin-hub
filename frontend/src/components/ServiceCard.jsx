@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ActionButton from './ActionButton'
 import Modal from './Modal'
 import LogViewer from './LogViewer'
@@ -17,9 +18,10 @@ const STATUS_LABEL = {
   unknown: '...',
 }
 
-function ServiceCard({ service, details, onRefresh }) {
+function ServiceCard({ service, details, onRefresh, detailsLink }) {
+  const navigate = useNavigate()
   const { addToast } = useToast()
-  const [modal, setModal] = useState(null) // { action }
+  const [modal, setModal] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [showLogs, setShowLogs] = useState(false)
 
@@ -94,16 +96,27 @@ function ServiceCard({ service, details, onRefresh }) {
           ))}
         </div>
 
-        {link && (
-          <a
-            className="card-link"
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {'\uD83D\uDD17'} Ouvrir
-          </a>
-        )}
+        <div className="card-footer">
+          {detailsLink && (
+            <button
+              className="details-link"
+              onClick={() => navigate(detailsLink)}
+              title={`Voir les details de ${label}`}
+            >
+              {'\uD83D\uDD0D'} Details
+            </button>
+          )}
+          {link && (
+            <a
+              className="card-link"
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {'\uD83D\uDD17'} Ouvrir
+            </a>
+          )}
+        </div>
       </div>
 
       <Modal
