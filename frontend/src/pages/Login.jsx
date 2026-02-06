@@ -16,6 +16,9 @@ function Login() {
     try {
       const res = await login(username, password)
       localStorage.setItem('admin_token', res.data.access_token)
+      // Store expiry info for Dashboard
+      localStorage.setItem('password_expired', String(res.data.password_expired))
+      localStorage.setItem('password_days_remaining', String(res.data.password_days_remaining))
       navigate('/')
     } catch {
       addToast('Identifiants incorrects', 'error')

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ServiceCard from '../components/ServiceCard'
 import RagCard from '../components/RagCard'
+import ChangePasswordModal from '../components/ChangePasswordModal'
 import {
   getServicesStatus,
   getN8nWorkflows,
@@ -11,14 +12,12 @@ import {
 } from '../services/api'
 import { useToast } from '../components/Toast'
 
-// Order of services in the grid (matches pitch layout)
 const SERVICE_ORDER = [
   'backend', 'frontend', 'n8n',
   'ollama', 'ghost', 'postgresql',
   'nginx',
 ]
 
-// Services that have a detail page
 const DETAILS_LINKS = {
   n8n: '/n8n',
   ollama: '/ollama',
@@ -33,6 +32,9 @@ function Dashboard() {
   })
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [showChangePwd, setShowChangePwd] = useState(false)
+  const [forcedChangePwd, setForcedChangePwd] = useState(false)
+  const [daysRemaining, setDaysRemaining] = useState(90)
 
   const fetchAll = useCallback(async () => {
     try {
@@ -44,7 +46,6 @@ function Dashboard() {
       addToast('Impossible de charger les statuts', 'error')
     }
 
-    // Fetch integrations in parallel, don't block on failures
     const [n8n, ollama, ghost, rag] = await Promise.allSettled([
       getN8nWorkflows(),
       getOllamaModels(),
@@ -66,6 +67,17 @@ function Dashboard() {
       navigate('/login')
       return
     }
+
+    // Check password expiry from login response
+    const expired = localStorage.getItem('password_expired') === 'true'
+    const days = parseInt(localStorage.getItem('password_days_remaining') || '90', 10)
+    setDaysRemaining(days)
+
+    if (expired) {
+      setForcedChangePwd(true)
+      setShowChangePwd(true)
+    }
+
     setLoading(true)
     fetchAll().finally(() => setLoading(false))
   }, [fetchAll, navigate])
@@ -79,7 +91,21 @@ function Dashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token')
+    localStorage.removeItem('password_expired')
+    localStorage.removeItem('password_days_remaining')
     navigate('/login')
+  }
+
+  const handlePasswordChanged = (success) => {
+    if (success) {
+      setShowChangePwd(false)
+      setForcedChangePwd(false)
+      setDaysRemaining(90)
+      localStorage.setItem('password_expired', 'false')
+      localStorage.setItem('password_days_remaining', '90')
+    } else if (!forcedChangePwd) {
+      setShowChangePwd(false)
+    }
   }
 
   const buildDetails = (name) => {
@@ -130,6 +156,15 @@ function Dashboard() {
 
   return (
     <div className="dashboard">
+      {daysRemaining <= 15 && daysRemaining > 0 && (
+        <div className="pwd-warning-banner">
+          {'\u26A0\uFE0F'} Votre mot de passe expire dans {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}.{' '}
+          <button className="pwd-warning-link" onClick={() => setShowChangePwd(true)}>
+            Le renouveler maintenant
+          </button>
+        </div>
+      )}
+
       <header className="dashboard-header">
         <div className="header-left">
           <h1>Hub Admin Digital Humans</h1>
@@ -147,6 +182,13 @@ function Dashboard() {
             ) : (
               <>{'\uD83D\uDD04'} Rafraichir</>
             )}
+          </button>
+          <button
+            className="btn btn-pwd"
+            onClick={() => setShowChangePwd(true)}
+            title="Changer le mot de passe"
+          >
+            {'\uD83D\uDD12'} Mot de passe
           </button>
           <button className="btn btn-logout" onClick={handleLogout}>
             Deconnexion
@@ -170,6 +212,12 @@ function Dashboard() {
         })}
         <RagCard data={integrations.rag} />
       </main>
+
+      <ChangePasswordModal
+        isOpen={showChangePwd}
+        onClose={handlePasswordChanged}
+        forced={forcedChangePwd}
+      />
     </div>
   )
 }

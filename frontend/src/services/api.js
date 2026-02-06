@@ -30,6 +30,9 @@ api.interceptors.response.use(
 export const login = (username, password) =>
   api.post('/auth/login', { username, password })
 
+export const changePassword = (old_password, new_password) =>
+  api.post('/auth/change-password', { old_password, new_password })
+
 // Services
 export const getServicesStatus = () => api.get('/services/status')
 export const getServiceStatus = (name) => api.get(`/services/status/${name}`)

@@ -930,3 +930,93 @@ body {
     justify-content: center;
   }
 }
+
+/* === Change Password Modal === */
+.change-pwd-modal {
+  max-width: 420px;
+}
+
+.change-pwd-modal h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.2rem;
+}
+
+.change-pwd-modal .form-group {
+  margin-bottom: 1rem;
+}
+
+.change-pwd-modal label {
+  display: block;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-bottom: 0.3rem;
+}
+
+.change-pwd-modal input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #f1f5f9;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.change-pwd-modal input:focus {
+  outline: none;
+  border-color: #60a5fa;
+}
+
+.pwd-expired-notice {
+  background: #7f1d1d;
+  color: #fca5a5;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.pwd-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+
+/* === Password Warning Banner === */
+.pwd-warning-banner {
+  background: #78350f;
+  color: #fbbf24;
+  padding: 0.6rem 1.2rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.pwd-warning-link {
+  background: none;
+  border: none;
+  color: #fde68a;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.pwd-warning-link:hover {
+  color: #fff;
+}
+
+/* === Btn Password === */
+.btn-pwd {
+  background: #334155;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+
+.btn-pwd:hover {
+  background: #475569;
+}

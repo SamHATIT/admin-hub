@@ -1,20 +1,37 @@
 """
-Auth router - JWT login and token validation.
+Auth router - JWT login, token validation, password change.
 """
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.context import CryptContext
 from jose import JWTError, jwt
+from pydantic import BaseModel
 
 from config import settings
-from models.schemas import LoginRequest, TokenResponse
+from models.schemas import LoginRequest
+from services.credentials_service import (
+    verify_password,
+    get_username,
+    is_password_expired,
+    password_days_remaining,
+    change_password,
+)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    password_expired: bool = False
+    password_days_remaining: int = 90
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
 
 
 def create_access_token(data: dict) -> str:
@@ -36,14 +53,30 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=LoginResponse)
 async def login(request: LoginRequest):
-    """Authenticate and return JWT token."""
-    if request.username != settings.ADMIN_USERNAME:
+    """Authenticate and return JWT token with password expiry info."""
+    if request.username != get_username():
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if not pwd_context.verify(request.password, settings.ADMIN_PASSWORD_HASH):
+    if not verify_password(request.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token({"sub": request.username})
-    return TokenResponse(access_token=token)
+    return LoginResponse(
+        access_token=token,
+        password_expired=is_password_expired(),
+        password_days_remaining=password_days_remaining(),
+    )
+
+
+@router.post("/change-password")
+async def change_password_endpoint(
+    request: ChangePasswordRequest,
+    user: str = Depends(get_current_user),
+):
+    """Change password (requires valid JWT)."""
+    result = change_password(request.old_password, request.new_password)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return {"success": True, "message": "Mot de passe modifié avec succès"}
