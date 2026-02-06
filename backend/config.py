@@ -111,7 +111,7 @@ class Settings:
             "check_url": "http://localhost:11434/api/tags",
             "commands": {
                 "start": "nohup ollama serve > /var/log/ollama.log 2>&1 &",
-                "stop": "pkill -f 'ollama serve'",
+                "stop": "pkill -f 'ollama serve' || true",
             },
             "log_file": "/var/log/ollama.log",
             "link": None,
