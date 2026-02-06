@@ -45,6 +45,16 @@ class Settings:
     OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
     GHOST_URL: str = os.getenv("GHOST_URL", "https://blog-admin.digital-humans.fr")
 
+    # N8N API (P2 integration)
+    N8N_API_KEY: str = os.getenv("N8N_API_KEY", "")
+    N8N_INTERNAL_URL: str = os.getenv("N8N_INTERNAL_URL", "http://localhost:5678")
+
+    # Ghost DB direct access (P2 integration)
+    GHOST_DB_PATH: str = os.getenv(
+        "GHOST_DB_PATH",
+        "/var/lib/docker/volumes/ghost_ghost_content/_data/data/ghost.db",
+    )
+
     # RAG ChromaDB
     CHROMA_DB_PATH: str = os.getenv(
         "CHROMA_DB_PATH",
