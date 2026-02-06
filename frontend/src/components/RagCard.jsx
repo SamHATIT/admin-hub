@@ -14,7 +14,7 @@ function RagCard({ data }) {
     )
   }
 
-  const isHealthy = data.status === 'healthy'
+  const isHealthy = data.healthy === true
 
   return (
     <div className={`service-card ${isHealthy ? 'status-up' : 'status-down'}`}>
@@ -24,10 +24,11 @@ function RagCard({ data }) {
         <span className="status-badge">{isHealthy ? 'OK' : 'ERR'}</span>
       </div>
       <div className="card-details">
-        {data.total_chunks != null && (
-          <p>{Number(data.total_chunks).toLocaleString()} chunks</p>
+        {data.chunks != null && (
+          <p>{Number(data.chunks).toLocaleString()} chunks</p>
         )}
-        {data.db_size && <p>Taille : {data.db_size}</p>}
+        {data.db_size_display && <p>Taille : {data.db_size_display}</p>}
+        {data.dir_size_display && <p>Total : {data.dir_size_display}</p>}
         {data.error && <p className="detail-error">{data.error}</p>}
       </div>
       <div className="card-meta">

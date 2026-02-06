@@ -107,14 +107,20 @@ function ServiceCard({ service, details, onRefresh, detailsLink }) {
             </button>
           )}
           {link && (
-            <a
-              className="card-link"
-              href={link}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {'\uD83D\uDD17'} Ouvrir
-            </a>
+            status === 'up' ? (
+              <a
+                className="card-link"
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {'\uD83D\uDD17'} Ouvrir
+              </a>
+            ) : (
+              <span className="card-link disabled" title="Service arrete - lien indisponible">
+                {'\uD83D\uDD17'} Ouvrir
+              </span>
+            )
           )}
         </div>
       </div>

@@ -58,19 +58,39 @@ async def execute_command(command: str, timeout: float = 60.0) -> dict:
             "return_code": -1,
         }
 
+    # Background commands (nohup ... &) need special handling
+    is_background = "nohup" in command and command.rstrip().endswith("&")
+
     try:
-        proc = await asyncio.create_subprocess_shell(
-            command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-        return {
-            "success": proc.returncode == 0,
-            "stdout": stdout.decode(errors="replace").strip(),
-            "stderr": stderr.decode(errors="replace").strip(),
-            "return_code": proc.returncode,
-        }
+        if is_background:
+            # Don't capture output for background commands - they redirect themselves
+            proc = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            # Give the process a moment to start
+            await asyncio.sleep(2)
+            return {
+                "success": True,
+                "stdout": "Process started in background",
+                "stderr": "",
+                "return_code": 0,
+            }
+        else:
+            proc = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            return {
+                "success": proc.returncode == 0,
+                "stdout": stdout.decode(errors="replace").strip(),
+                "stderr": stderr.decode(errors="replace").strip(),
+                "return_code": proc.returncode,
+            }
     except asyncio.TimeoutError:
         proc.kill()
         return {
