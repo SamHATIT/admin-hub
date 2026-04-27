@@ -27,10 +27,11 @@ const MAIN_SERVICES = ['backend', 'frontend', 'n8n', 'ollama', 'ghost', 'postgre
 const INFRA_SERVICE = 'nginx'
 const DETAILS_LINKS = { n8n: '/n8n', ollama: '/ollama' }
 
-// External link to Digital Humans platform (current console runs on console.digital-humans.fr,
-// the platform itself is on / via nginx :80 - cf. A5 deployment).
-const PLATFORM_URL = 'https://digital-humans.fr'   // production future
-const PLATFORM_FALLBACK = 'http://72.61.161.222'   // current studio preview
+// External link to Digital Humans platform.
+// Note: digital-humans.fr is the marketing site (Ghost CMS) — not the Studio platform.
+// The Studio platform is currently at http://72.61.161.222 (preview).
+// TODO post-prod-switch: point to the real platform URL (likely app.digital-humans.fr).
+const PLATFORM_URL = 'http://72.61.161.222'
 const AGENT_TESTER_PATH = '/agent-tester'
 
 function Dashboard() {
@@ -268,7 +269,6 @@ function Dashboard() {
           dh={dh}
           serviceBackend={services.backend}
           platformUrl={PLATFORM_URL}
-          platformFallback={PLATFORM_FALLBACK}
           agentTesterPath={AGENT_TESTER_PATH}
         />
 
@@ -330,12 +330,8 @@ function Dashboard() {
 }
 
 // ── Featured DH card — links to platform + agent tester ──
-function DhFocusCard({ dh, serviceBackend, platformUrl, platformFallback, agentTesterPath }) {
-  // Resolve external base URL — use the same host the user is on (so they keep their session)
-  // For now, use the legacy fallback since prod isn't switched yet.
-  const platformBase = (typeof window !== 'undefined' && window.location.hostname.includes('digital-humans.fr'))
-    ? platformUrl : platformFallback
-
+function DhFocusCard({ dh, serviceBackend, platformUrl, agentTesterPath }) {
+  const platformBase = platformUrl
   const backendUp = serviceBackend?.status === 'up'
   const workers = dh.workers
   const executions = dh.executions
