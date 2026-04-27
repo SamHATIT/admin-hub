@@ -1,33 +1,25 @@
+import { Play, Square, RotateCw, FileText, CheckCircle2 } from 'lucide-react'
+
 const ACTION_CONFIG = {
-  start:       { label: 'Demarrer',  icon: '\uD83D\uDE80', className: 'btn-start' },
-  stop:        { label: 'Arreter',   icon: '\uD83D\uDED1', className: 'btn-stop' },
-  restart:     { label: 'Redemarrer', icon: '\uD83D\uDD04', className: 'btn-restart' },
-  logs:        { label: 'Logs',      icon: '\uD83D\uDCCB', className: 'btn-logs' },
-  test_config: { label: 'Test Config', icon: '\u2705',      className: 'btn-test' },
+  start:       { label: 'Start',      Icon: Play,        cls: 'text-success border-success/30 hover:bg-success/10' },
+  stop:        { label: 'Stop',       Icon: Square,      cls: 'text-error border-error/30 hover:bg-error/10' },
+  restart:     { label: 'Restart',    Icon: RotateCw,    cls: 'text-warning border-warning/30 hover:bg-warning/10' },
+  logs:        { label: 'Logs',       Icon: FileText,    cls: 'text-bone-3 border-bone/20 hover:bg-ink-3' },
+  test_config: { label: 'Test config',Icon: CheckCircle2,cls: 'text-bone-3 border-bone/20 hover:bg-ink-3' },
 }
 
-const TOOLTIP_MAP = {
-  start:       (label, port) => `Demarrer ${label} - Port ${port}`,
-  stop:        (label, port) => `Arreter ${label} - Port ${port}`,
-  restart:     (label, port) => `Redemarrer ${label} - Port ${port}`,
-  logs:        (label) => `Voir les logs de ${label}`,
-  test_config: (label) => `Tester la configuration ${label}`,
-}
-
-function ActionButton({ action, serviceLabel, port, onClick, disabled }) {
-  const config = ACTION_CONFIG[action] || { label: action, icon: '', className: '' }
-  const tooltipFn = TOOLTIP_MAP[action]
-  const tooltip = tooltipFn ? tooltipFn(serviceLabel, port) : action
-
+function ActionButton({ action, onClick, disabled }) {
+  const cfg = ACTION_CONFIG[action] || { label: action, Icon: FileText, cls: 'text-bone-3 border-bone/20' }
+  const { Icon } = cfg
   return (
     <button
-      className={`action-button ${config.className}`}
+      type="button"
       onClick={() => onClick(action)}
       disabled={disabled}
-      title={tooltip}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 bg-transparent border ${cfg.cls} font-mono text-[10px] tracking-eyebrow uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
     >
-      <span className="action-icon">{config.icon}</span>
-      <span className="action-label">{config.label}</span>
+      <Icon className="w-3 h-3" />
+      <span>{cfg.label}</span>
     </button>
   )
 }

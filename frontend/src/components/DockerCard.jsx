@@ -1,13 +1,21 @@
 import { useState } from 'react'
+import { Container, Play, Square, RotateCw } from 'lucide-react'
 import Modal from './Modal'
 import { dockerAction } from '../services/api'
 import { useToast } from './Toast'
 
 const STATE_DOT = {
-  running: 'up',
-  exited: 'down',
-  created: 'unknown',
-  paused: 'unknown',
+  running: 'bg-success',
+  exited:  'bg-error',
+  created: 'bg-bone-4',
+  paused:  'bg-warning',
+}
+
+const STATE_TEXT = {
+  running: 'text-success',
+  exited:  'text-error',
+  created: 'text-bone-4',
+  paused:  'text-warning',
 }
 
 function DockerCard({ containers, onRefresh }) {
@@ -17,13 +25,13 @@ function DockerCard({ containers, onRefresh }) {
 
   if (!containers) {
     return (
-      <div className="service-card status-unknown docker-card">
-        <div className="card-header">
-          <span className="status-dot unknown" />
-          <h3 className="card-title">Docker</h3>
-          <span className="status-badge">...</span>
+      <div className="bg-ink-2 border border-bone/10 p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <Container className="w-4 h-4 text-bone-4" />
+          <h3 className="font-serif italic text-lg text-bone-3">Docker</h3>
+          <span className="ml-auto font-mono text-[10px] tracking-eyebrow uppercase text-bone-4">…</span>
         </div>
-        <div className="card-details"><p>Chargement...</p></div>
+        <p className="font-mono text-[11px] text-bone-3 italic">Chargement…</p>
       </div>
     )
   }
@@ -42,7 +50,7 @@ function DockerCard({ containers, onRefresh }) {
     try {
       const res = await dockerAction(containerName, action)
       if (res.data.result.success) {
-        addToast(`Docker ${action} ${containerName} : succes`, 'success')
+        addToast(`Docker ${action} ${containerName} : succès`, 'success')
       } else {
         addToast(`Docker ${containerName} : ${res.data.result.stderr || 'Erreur'}`, 'error')
       }
@@ -57,49 +65,67 @@ function DockerCard({ containers, onRefresh }) {
 
   return (
     <>
-      <div className={`service-card ${allUp ? 'status-up' : 'status-down'} docker-card`}>
-        <div className="card-header">
-          <span className={`status-dot ${allUp ? 'up' : 'down'}`} />
-          <h3 className="card-title">{'\uD83D\uDC33'} Docker</h3>
-          <span className="status-badge">{running}/{total}</span>
+      <div className="bg-ink-2 border border-bone/10 hover:border-brass/30 transition-colors">
+        <div className="flex items-center justify-between gap-3 p-5 border-b border-bone/5">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <span className={`w-2 h-2 rounded-full ${allUp ? 'bg-success' : 'bg-error'} flex-shrink-0`} />
+            <Container className="w-3.5 h-3.5 text-brass flex-shrink-0" />
+            <h3 className="font-serif italic text-lg text-bone truncate">Docker</h3>
+          </div>
+          <span className={`font-mono text-[10px] tracking-eyebrow uppercase tabular-nums ${allUp ? 'text-success' : 'text-warning'}`}>
+            {running}/{total}
+          </span>
         </div>
 
-        <div className="docker-containers">
+        <div className="divide-y divide-bone/5">
           {containers.map((c) => (
-            <div key={c.name} className={`docker-container-row ${c.state}`}>
-              <div className="docker-row-top">
-                <span className={`status-dot small ${STATE_DOT[c.state] || 'unknown'}`} />
-                <span className="docker-name">{c.name}</span>
-                <span className="docker-state-badge">{c.state}</span>
-              </div>
-              <div className="docker-row-meta">
-                <span className="docker-image" title={c.image}>
-                  {c.image.length > 30 ? '...' + c.image.slice(-27) : c.image}
+            <div key={c.name} className="px-5 py-3">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${STATE_DOT[c.state] || 'bg-bone-4'} flex-shrink-0`} />
+                <span className="font-serif italic text-[15px] text-bone truncate flex-1">{c.name}</span>
+                <span className={`font-mono text-[10px] tracking-eyebrow uppercase ${STATE_TEXT[c.state] || 'text-bone-4'} flex-shrink-0`}>
+                  {c.state}
                 </span>
-                {c.ports_display !== '-' && (
-                  <span className="docker-ports">{c.ports_display}</span>
+              </div>
+              <div className="font-mono text-[10px] text-bone-4 mb-1 truncate" title={c.image}>
+                {c.image.length > 36 ? '…' + c.image.slice(-33) : c.image}
+                {c.ports_display && c.ports_display !== '-' && (
+                  <span className="ml-2 text-bone-3">· {c.ports_display}</span>
                 )}
               </div>
               {c.state === 'running' && (
-                <div className="docker-row-stats">
-                  <span>CPU: {c.cpu}</span>
-                  <span>RAM: {c.mem_usage}</span>
-                  <span>({c.mem_pct})</span>
+                <div className="font-mono text-[10px] text-bone-3 tabular-nums mb-2">
+                  CPU {c.cpu} · RAM {c.mem_usage} ({c.mem_pct})
                 </div>
               )}
-              <div className="docker-row-actions">
+              <div className="flex items-center gap-1.5">
                 {c.state === 'running' ? (
                   <>
-                    <button className="btn-mini btn-warning" onClick={() => handleAction(c.name, 'restart')} title="Restart">
-                      {'\uD83D\uDD04'}
+                    <button
+                      type="button"
+                      onClick={() => handleAction(c.name, 'restart')}
+                      title="Restart"
+                      className="inline-flex items-center justify-center w-7 h-7 text-warning border border-warning/30 hover:bg-warning/10 transition-colors"
+                    >
+                      <RotateCw className="w-3 h-3" />
                     </button>
-                    <button className="btn-mini btn-danger" onClick={() => handleAction(c.name, 'stop')} title="Stop">
-                      {'\uD83D\uDED1'}
+                    <button
+                      type="button"
+                      onClick={() => handleAction(c.name, 'stop')}
+                      title="Stop"
+                      className="inline-flex items-center justify-center w-7 h-7 text-error border border-error/30 hover:bg-error/10 transition-colors"
+                    >
+                      <Square className="w-3 h-3" />
                     </button>
                   </>
                 ) : (
-                  <button className="btn-mini btn-success" onClick={() => handleAction(c.name, 'start')} title="Start">
-                    {'\uD83D\uDE80'}
+                  <button
+                    type="button"
+                    onClick={() => handleAction(c.name, 'start')}
+                    title="Start"
+                    className="inline-flex items-center justify-center w-7 h-7 text-success border border-success/30 hover:bg-success/10 transition-colors"
+                  >
+                    <Play className="w-3 h-3" />
                   </button>
                 )}
               </div>
@@ -107,8 +133,8 @@ function DockerCard({ containers, onRefresh }) {
           ))}
         </div>
 
-        <div className="card-meta">
-          <span className="meta-port">{total} container{total > 1 ? 's' : ''}</span>
+        <div className="px-5 py-2.5 border-t border-bone/5 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4">
+          {total} container{total > 1 ? 's' : ''}
         </div>
       </div>
 

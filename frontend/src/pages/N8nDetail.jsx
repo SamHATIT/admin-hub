@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import {
+  ArrowLeft, RefreshCw, ChevronDown, ChevronUp, Loader2, Play, Pause,
+} from 'lucide-react'
 import { getN8nWorkflows, getN8nExecutions, toggleN8nWorkflow } from '../services/api'
 import { useToast } from '../components/Toast'
 
@@ -9,7 +12,8 @@ function N8nDetail() {
   const [workflows, setWorkflows] = useState([])
   const [executions, setExecutions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [toggling, setToggling] = useState(null) // workflow id being toggled
+  const [refreshing, setRefreshing] = useState(false)
+  const [toggling, setToggling] = useState(null)
   const [selectedWf, setSelectedWf] = useState(null)
 
   const fetchWorkflows = useCallback(async () => {
@@ -37,21 +41,21 @@ function N8nDetail() {
     fetchWorkflows().finally(() => setLoading(false))
   }, [fetchWorkflows, navigate])
 
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await fetchWorkflows()
+    setRefreshing(false)
+  }
+
   const handleToggle = async (wf) => {
     const newState = !wf.active
     setToggling(wf.id)
     try {
       await toggleN8nWorkflow(wf.id, newState)
-      addToast(
-        `${wf.name} : ${newState ? 'active' : 'desactive'}`,
-        'success'
-      )
+      addToast(`${wf.name} : ${newState ? 'activé' : 'désactivé'}`, 'success')
       await fetchWorkflows()
     } catch (err) {
-      addToast(
-        `Erreur toggle ${wf.name} : ${err.response?.data?.detail || err.message}`,
-        'error'
-      )
+      addToast(`Erreur toggle ${wf.name} : ${err.response?.data?.detail || err.message}`, 'error')
     } finally {
       setToggling(null)
     }
@@ -68,137 +72,181 @@ function N8nDetail() {
   }
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return '-'
-    const d = new Date(dateStr)
-    return d.toLocaleString('fr-FR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    })
+    if (!dateStr) return '—'
+    try {
+      return new Date(dateStr).toLocaleString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })
+    } catch { return dateStr }
   }
 
   const activeCount = workflows.filter((w) => w.active).length
 
   if (loading) {
     return (
-      <div className="detail-page">
-        <div className="loading-screen">
-          <span className="spinner large" />
-          <p>Chargement des workflows...</p>
+      <div className="min-h-screen flex items-center justify-center bg-ink">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-6 h-6 text-brass animate-spin" />
+          <p className="font-mono text-[11px] tracking-eyebrow uppercase text-bone-3">
+            Chargement des workflows…
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="detail-page">
-      <header className="detail-header">
-        <div className="detail-header-left">
-          <Link to="/" className="back-link">{'\u2190'} Retour au dashboard</Link>
-          <h1>N8N Workflows</h1>
-          <p>{workflows.length} workflow{workflows.length > 1 ? 's' : ''} &middot; {activeCount} actif{activeCount > 1 ? 's' : ''}</p>
+    <div className="min-h-screen flex flex-col bg-ink text-bone">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-ink-2/95 backdrop-blur-md border-b border-brass/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 gap-4">
+            <Link to="/" className="inline-flex items-center gap-2 font-mono text-[10px] tracking-eyebrow uppercase text-bone-3 hover:text-brass transition-colors">
+              <ArrowLeft className="w-3 h-3" />
+              Console
+            </Link>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-1.5 px-3 py-2 font-mono text-[10px] tracking-cta uppercase text-bone-3 hover:text-bone border border-bone/10 hover:border-brass/40 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Rafraîchir</span>
+            </button>
+          </div>
         </div>
-        <button className="btn btn-refresh" onClick={() => { setLoading(true); fetchWorkflows().finally(() => setLoading(false)) }}>
-          {'\uD83D\uDD04'} Rafraichir
-        </button>
       </header>
 
-      <div className="detail-table-wrapper">
-        <table className="detail-table">
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Etat</th>
-              <th>Derniere modification</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {workflows.length === 0 && (
-              <tr><td colSpan="4" className="table-empty">Aucun workflow trouve</td></tr>
-            )}
-            {workflows.map((wf) => (
-              <>
-                <tr key={wf.id} className={selectedWf === wf.id ? 'row-selected' : ''}>
-                  <td>
-                    <button
-                      className="wf-name-btn"
-                      onClick={() => handleSelectWorkflow(wf)}
-                      title="Voir les dernieres executions"
-                    >
-                      {wf.name}
-                      <span className="wf-expand">{selectedWf === wf.id ? '\u25B2' : '\u25BC'}</span>
-                    </button>
-                  </td>
-                  <td>
-                    <span className={`badge ${wf.active ? 'badge-active' : 'badge-inactive'}`}>
-                      {wf.active ? 'Actif' : 'Inactif'}
-                    </span>
-                  </td>
-                  <td className="cell-date">{formatDate(wf.updated_at || wf.created_at)}</td>
-                  <td>
-                    <button
-                      className={`toggle-btn ${wf.active ? 'toggle-off' : 'toggle-on'}`}
-                      onClick={() => handleToggle(wf)}
-                      disabled={toggling === wf.id}
-                      title={wf.active ? 'Desactiver ce workflow' : 'Activer ce workflow'}
-                    >
-                      {toggling === wf.id ? (
-                        <span className="spinner" />
-                      ) : wf.active ? (
-                        '\u23F8 Desactiver'
-                      ) : (
-                        '\u25B6 Activer'
-                      )}
-                    </button>
-                  </td>
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        {/* Hero */}
+        <div className="mb-8">
+          <p className="font-mono text-[11px] tracking-eyebrow uppercase text-bone-4 mb-3">
+            № 02 · N8N
+          </p>
+          <h1 className="font-serif italic text-4xl md:text-5xl text-bone leading-[1.05] mb-2">
+            Workflows.
+          </h1>
+          <p className="font-mono text-[12px] text-bone-3 tabular-nums">
+            {workflows.length} workflow{workflows.length > 1 ? 's' : ''} · {activeCount} actif{activeCount > 1 ? 's' : ''}
+          </p>
+        </div>
+
+        {/* Table */}
+        <div className="bg-ink-2 border border-bone/10 overflow-hidden">
+          {workflows.length === 0 ? (
+            <p className="font-mono text-[12px] text-bone-3 italic p-8 text-center">
+              Aucun workflow trouvé
+            </p>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-bone/10">
+                  <th className="text-left px-5 py-3 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4 font-normal">Nom</th>
+                  <th className="text-left px-5 py-3 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4 font-normal">État</th>
+                  <th className="text-left px-5 py-3 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4 font-normal hidden md:table-cell">Modifié</th>
+                  <th className="text-right px-5 py-3 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4 font-normal">Action</th>
                 </tr>
-                {selectedWf === wf.id && (
-                  <tr key={`${wf.id}-exec`} className="exec-row">
-                    <td colSpan="4">
-                      <div className="exec-panel">
-                        <h4>Dernieres executions</h4>
-                        {executions.length === 0 ? (
-                          <p className="exec-empty">Aucune execution recente</p>
-                        ) : (
-                          <table className="exec-table">
-                            <thead>
-                              <tr>
-                                <th>Statut</th>
-                                <th>Debut</th>
-                                <th>Fin</th>
-                                <th>Duree</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {executions.map((ex) => {
-                                const duration = ex.started_at && ex.finished_at
-                                  ? Math.round((new Date(ex.finished_at) - new Date(ex.started_at)) / 1000)
-                                  : null
-                                return (
-                                  <tr key={ex.id}>
-                                    <td>
-                                      <span className={`badge ${ex.status === 'success' ? 'badge-active' : ex.status === 'error' ? 'badge-error' : 'badge-inactive'}`}>
-                                        {ex.status}
-                                      </span>
-                                    </td>
-                                    <td className="cell-date">{formatDate(ex.started_at)}</td>
-                                    <td className="cell-date">{formatDate(ex.finished_at)}</td>
-                                    <td>{duration != null ? `${duration}s` : '-'}</td>
+              </thead>
+              <tbody>
+                {workflows.map((wf) => (
+                  <Fragment key={wf.id}>
+                    <tr className={`border-b border-bone/5 hover:bg-ink-3/40 transition-colors ${selectedWf === wf.id ? 'bg-ink-3/40' : ''}`}>
+                      <td className="px-5 py-3.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectWorkflow(wf)}
+                          className="inline-flex items-center gap-2 font-serif italic text-[15px] text-bone hover:text-brass transition-colors text-left"
+                        >
+                          <span>{wf.name}</span>
+                          {selectedWf === wf.id ? <ChevronUp className="w-3 h-3 text-bone-4 flex-shrink-0" /> : <ChevronDown className="w-3 h-3 text-bone-4 flex-shrink-0" />}
+                        </button>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center gap-1.5 font-mono text-[10px] tracking-eyebrow uppercase ${wf.active ? 'text-success' : 'text-bone-4'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${wf.active ? 'bg-success' : 'bg-bone-4'}`} />
+                          {wf.active ? 'Actif' : 'Inactif'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-[11px] text-bone-3 tabular-nums hidden md:table-cell">
+                        {formatDate(wf.updated_at || wf.created_at)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleToggle(wf)}
+                          disabled={toggling === wf.id}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] tracking-eyebrow uppercase border transition-colors disabled:opacity-50 ${
+                            wf.active
+                              ? 'text-warning border-warning/30 hover:bg-warning/10'
+                              : 'text-success border-success/30 hover:bg-success/10'
+                          }`}
+                        >
+                          {toggling === wf.id ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : wf.active ? <><Pause className="w-3 h-3" />Désactiver</>
+                            : <><Play className="w-3 h-3" />Activer</>}
+                        </button>
+                      </td>
+                    </tr>
+                    {selectedWf === wf.id && (
+                      <tr className="bg-ink/40 border-b border-bone/5">
+                        <td colSpan={4} className="px-5 py-5">
+                          <p className="font-mono text-[10px] tracking-eyebrow uppercase text-brass mb-3">
+                            Dernières exécutions
+                          </p>
+                          {executions.length === 0 ? (
+                            <p className="font-mono text-[11px] text-bone-3 italic">
+                              Aucune exécution récente
+                            </p>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <table className="w-full">
+                                <thead>
+                                  <tr className="border-b border-bone/10">
+                                    <th className="text-left py-2 px-3 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4 font-normal">Statut</th>
+                                    <th className="text-left py-2 px-3 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4 font-normal">Début</th>
+                                    <th className="text-left py-2 px-3 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4 font-normal">Fin</th>
+                                    <th className="text-right py-2 px-3 font-mono text-[10px] tracking-eyebrow uppercase text-bone-4 font-normal">Durée</th>
                                   </tr>
-                                )
-                              })}
-                            </tbody>
-                          </table>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                                </thead>
+                                <tbody>
+                                  {executions.map((ex) => {
+                                    const duration = ex.started_at && ex.finished_at
+                                      ? Math.round((new Date(ex.finished_at) - new Date(ex.started_at)) / 1000)
+                                      : null
+                                    const tone = ex.status === 'success' ? 'text-success' : ex.status === 'error' ? 'text-error' : 'text-bone-4'
+                                    const dot = ex.status === 'success' ? 'bg-success' : ex.status === 'error' ? 'bg-error' : 'bg-bone-4'
+                                    return (
+                                      <tr key={ex.id} className="border-b border-bone/5 last:border-0">
+                                        <td className="py-2 px-3">
+                                          <span className={`inline-flex items-center gap-1.5 font-mono text-[10px] tracking-eyebrow uppercase ${tone}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+                                            {ex.status}
+                                          </span>
+                                        </td>
+                                        <td className="py-2 px-3 font-mono text-[11px] text-bone-3 tabular-nums">{formatDate(ex.started_at)}</td>
+                                        <td className="py-2 px-3 font-mono text-[11px] text-bone-3 tabular-nums">{formatDate(ex.finished_at)}</td>
+                                        <td className="py-2 px-3 text-right font-mono text-[11px] text-bone-2 tabular-nums">
+                                          {duration != null ? `${duration}s` : '—'}
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </main>
     </div>
   )
 }
